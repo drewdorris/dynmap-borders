@@ -1,11 +1,19 @@
 package com.ruinscraft.countries;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.markers.MarkerSet;
+import org.geotools.data.FileDataStore;
+import org.geotools.data.FileDataStoreFinder;
+import org.geotools.data.simple.SimpleFeatureSource;
+import org.opengis.feature.Feature;
+import org.opengis.feature.simple.SimpleFeature;
 
 public class DynmapCountries extends JavaPlugin {
 
@@ -13,6 +21,8 @@ public class DynmapCountries extends JavaPlugin {
 	private DynmapAPI api;
 	private MarkerAPI markerapi;
 	private MarkerSet markerSet;
+	
+	private SimpleFeatureSource featureSource;
 
 	@Override
 	public void onEnable() {
@@ -43,6 +53,22 @@ public class DynmapCountries extends JavaPlugin {
 		cfg.options().copyDefaults(true);   /* Load defaults, if needed */
 		this.saveConfig();  /* Save updates, if needed */
 
+		File shapefile = new File(this.getDataFolder(), this.getConfig().getString("shapefilePath"));
+		
+		try {
+			FileDataStore store = FileDataStoreFinder.getDataStore(shapefile);
+			featureSource = store.getFeatureSource();
+			
+			while (featureSource.getFeatures().features().hasNext()) {
+				SimpleFeature feature = featureSource.getFeatures().features().next();
+				// figure out what feature does
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+
 		/* Now, add marker set for mobs (make it transient) */
 		markerSet = markerapi.getMarkerSet("countries.markerset");
 		if(markerSet == null)
@@ -53,6 +79,7 @@ public class DynmapCountries extends JavaPlugin {
 			this.getLogger().severe("Error creating marker set");
 			return;
 		}
+
 
 		int minzoom = cfg.getInt("layer.minzoom", 0);
 		if (minzoom > 0) markerSet.setMinZoom(minzoom);
