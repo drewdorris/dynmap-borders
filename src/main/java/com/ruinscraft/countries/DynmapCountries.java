@@ -20,6 +20,7 @@ public class DynmapCountries extends JavaPlugin {
 		dynmap = getServer().getPluginManager().getPlugin("dynmap");
 		if (dynmap == null) {
 			this.getLogger().severe("Need Dynmap!!!");
+			this.getPluginLoader().disablePlugin(this);
 			return;
 		}
 
