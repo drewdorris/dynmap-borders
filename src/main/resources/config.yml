@@ -1,1 +1,3 @@
 shapefilePath: shapefile.shp
+layerName: "Countries"
+scaling: 120
