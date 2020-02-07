@@ -2,6 +2,9 @@ package com.ruinscraft.countries;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.Map;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -9,8 +12,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.markers.MarkerSet;
+import org.geotools.data.DataStore;
+import org.geotools.data.DataStoreFinder;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
+import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.opengis.feature.Feature;
 import org.opengis.feature.simple.SimpleFeature;
@@ -21,7 +27,7 @@ public class DynmapCountries extends JavaPlugin {
 	private DynmapAPI api;
 	private MarkerAPI markerapi;
 	private MarkerSet markerSet;
-	
+
 	private SimpleFeatureSource featureSource;
 
 	@Override
@@ -34,6 +40,8 @@ public class DynmapCountries extends JavaPlugin {
 			return;
 		}
 
+		this.getLogger().info("enabled woo");
+
 		api = (DynmapAPI) dynmap; /* Get API */
 
 		/* If both enabled, activate */
@@ -43,6 +51,7 @@ public class DynmapCountries extends JavaPlugin {
 	}
 
 	private void activate() {
+		this.getLogger().info("woo");
 		markerapi = api.getMarkerAPI();
 		if(markerapi == null) {
 			this.getLogger().severe("Error loading dynmap marker API!");
@@ -54,17 +63,20 @@ public class DynmapCountries extends JavaPlugin {
 		this.saveConfig();  /* Save updates, if needed */
 
 		File shapefile = new File(this.getDataFolder(), this.getConfig().getString("shapefilePath"));
-		
+
 		try {
-			FileDataStore store = FileDataStoreFinder.getDataStore(shapefile);
-			featureSource = store.getFeatureSource();
-			
+			Map<String, URL> map = Collections.singletonMap("url", shapefile.toURI().toURL());
+			DataStore store = DataStoreFinder.getDataStore(map);
+			String typeName = store.getTypeNames()[0];
+			featureSource = store.getFeatureSource(typeName);
+
 			while (featureSource.getFeatures().features().hasNext()) {
 				SimpleFeature feature = featureSource.getFeatures().features().next();
 				// figure out what feature does
+
+				System.out.println(feature.getName());
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		}
