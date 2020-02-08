@@ -49,8 +49,6 @@ public class DynmapCountries extends JavaPlugin {
 			return;
 		}
 
-		this.getLogger().info("enabled woo");
-
 		api = (DynmapAPI) dynmap; /* Get API */
 
 		/* If both enabled, activate */
@@ -66,7 +64,6 @@ public class DynmapCountries extends JavaPlugin {
 	}
 
 	private void activate() throws IOException {
-		this.getLogger().info("woo");
 		markerapi = api.getMarkerAPI();
 		if(markerapi == null) {
 			this.getLogger().severe("Error loading dynmap marker API!");
