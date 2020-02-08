@@ -2,31 +2,31 @@ package com.ruinscraft.countries;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapAPI;
-import org.dynmap.markers.Marker;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.markers.MarkerSet;
 import org.dynmap.markers.PolyLineMarker;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
-import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+
+import com.google.common.io.CharStreams;
 
 public class DynmapCountries extends JavaPlugin {
 
@@ -55,11 +55,17 @@ public class DynmapCountries extends JavaPlugin {
 
 		/* If both enabled, activate */
 		if (dynmap.isEnabled()) {
-			activate();
+			try {
+				activate();
+			} catch (IOException e) {
+				e.printStackTrace();
+				this.getPluginLoader().disablePlugin(this);
+				return;
+			}
 		}
 	}
 
-	private void activate() {
+	private void activate() throws IOException {
 		this.getLogger().info("woo");
 		markerapi = api.getMarkerAPI();
 		if(markerapi == null) {
@@ -71,6 +77,9 @@ public class DynmapCountries extends JavaPlugin {
 		cfg.options().copyDefaults(true);   /* Load defaults, if needed */
 		this.saveConfig();  /* Save updates, if needed */
 
+		if (this.getResource(cfg.getString("countriesFile")) == null) {
+			this.saveResource(cfg.getString("countriesFile"), false);
+		}
 		this.scaling = cfg.getDouble("scaling", 120);
 
 		File shapefile = new File(this.getDataFolder(), this.getConfig().getString("shapefilePath"));
@@ -86,17 +95,9 @@ public class DynmapCountries extends JavaPlugin {
 			e1.printStackTrace();
 		}
 
-		try {
-			FileDataStore store = FileDataStoreFinder.getDataStore(shapefile);
+		FileDataStore store = FileDataStoreFinder.getDataStore(shapefile);
 
-			this.featureSource = store.getFeatureSource();
-
-			long features = featureSource.getFeatures().size();
-			System.out.println("features: " + features);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
+		this.featureSource = store.getFeatureSource();
 
 		/* Now, add marker set for mobs (make it transient) */
 		markerSet = markerapi.getMarkerSet("countries.markerset");
@@ -128,19 +129,7 @@ public class DynmapCountries extends JavaPlugin {
 
 			String countryName = (String) feature.getAttribute(4);
 
-			if (countryName.contains("South Africa")) {
-				for (Property property : feature.getProperties()) {
-					System.out.print(property.getValue().toString() + " // ");
-				}
-				System.out.println();
-			}
-
 			int index = 0;
-
-			double keepTrackOfLats = 0;
-			double keepTrackOfLons = 0;
-
-			int total = 0;
 
 			for (Property property : feature.getProperties()) {
 				index++;
@@ -174,15 +163,12 @@ public class DynmapCountries extends JavaPlugin {
 							e.printStackTrace();
 							continue;
 						}
-						keepTrackOfLats += lat * this.scaling;
 						x[i] = lat * this.scaling;
 
 						y[i] = 64;
 
-						keepTrackOfLons += lon * this.scaling * -1;
 						z[i] = lon * this.scaling * -1;
 						i++;
-						total++;
 					}
 
 					if (markerSet.findPolyLineMarker(id) != null) markerSet.findPolyLineMarker(id).deleteMarker();
@@ -193,14 +179,13 @@ public class DynmapCountries extends JavaPlugin {
 						this.getLogger().info("error adding area marker " + id);
 						continue;
 					}
-					polyline.setLineStyle(3, .5, 0xFF00FF);
+
+					int color = 0xCC66CC;
+					polyline.setLineStyle(3, .5, color);
+
 					polygonIndex++;
 				}
 			}
-			keepTrackOfLats = keepTrackOfLats / total;
-			keepTrackOfLons = keepTrackOfLons / total;
-			markerSet.createMarker(countryName + "_" + iteration + "_" + index, countryName, Bukkit.getWorlds().get(0).getName(), 
-					keepTrackOfLats, 64D, keepTrackOfLons, markerapi.getMarkerIcon("king"), false);
 		}
 		iterator.close();
 
@@ -209,7 +194,23 @@ public class DynmapCountries extends JavaPlugin {
 		markerSet.setLayerPriority(cfg.getInt("layer.layerprio", 12));
 		markerSet.setHideByDefault(cfg.getBoolean("layer.hidebydefault", true));
 
+		handleCountryMarkers();
+
 		this.getLogger().info("version " + this.getDescription().getVersion() + " is activated");
+	}
+
+	// only run after activate()
+	public void handleCountryMarkers() throws IOException {
+		Reader reader = this.getTextResource(this.getConfig().getString("countriesFile"));
+		for (String string : CharStreams.readLines(reader)) {
+			String[] separated = string.split("\t");
+
+			double x = Double.valueOf(separated[2]) * this.scaling;
+			double z = Double.valueOf(separated[1]) * this.scaling * -1;
+
+			markerSet.createMarker(separated[0], separated[3], 
+					this.getServer().getWorlds().get(0).getName(), x, 64D, z, markerapi.getMarkerIcon("king"), false);
+		}
 	}
 
 }
