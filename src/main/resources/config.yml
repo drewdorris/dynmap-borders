@@ -5,6 +5,11 @@
 shapefilePath: shapefile.shp
 ## Scaling depends on the size of your Earth map. If 1:1000 scale of Earth, use 120
 scaling: 120
+## If your Earth map is off center for some reason, you can shift the x/z axis in blocks
+xOffset: 0
+zOffset: 0
+## Y value for all the borders & markers; maybe used if you use the 3D dynmap
+y: 64
 ## File used for country name marker data
 countriesFile: countries.txt
 ## Which world to define this for 

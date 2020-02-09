@@ -33,6 +33,10 @@ public class DynmapCountries extends JavaPlugin {
 
 	private double scaling;
 
+	private int xOffset = 0;
+	private int y = 64;
+	private int zOffset = 0;
+
 	private World world;
 
 	private FeatureSource<SimpleFeatureType, SimpleFeature> featureSource;
@@ -77,6 +81,9 @@ public class DynmapCountries extends JavaPlugin {
 			this.saveResource(cfg.getString("countriesFile"), false);
 		}
 		this.scaling = cfg.getDouble("scaling", 120);
+		this.xOffset = cfg.getInt("xOffset", 0);
+		this.y = cfg.getInt("y", 64);
+		this.zOffset = cfg.getInt("zOffset", 0);
 
 		File shapefile = new File(this.getDataFolder(), this.getConfig().getString("shapefilePath"));
 		if (shapefile == null || !shapefile.isFile()) {
@@ -158,11 +165,11 @@ public class DynmapCountries extends JavaPlugin {
 							e.printStackTrace();
 							continue;
 						}
-						x[i] = lat * this.scaling;
+						x[i] = (lat * this.scaling) + xOffset;
 
-						y[i] = 64;
+						y[i] = this.y;
 
-						z[i] = lon * this.scaling * -1;
+						z[i] = (lon * this.scaling) * -1 + zOffset;
 						i++;
 					}
 
@@ -207,7 +214,7 @@ public class DynmapCountries extends JavaPlugin {
 			double x = Double.valueOf(separated[2]) * this.scaling;
 			double z = Double.valueOf(separated[1]) * this.scaling * -1;
 
-			markerSet.createMarker(separated[0], separated[3], this.world.getName(), x, 64D, z, 
+			markerSet.createMarker(separated[0], separated[3], this.world.getName(), x, this.y, z, 
 					markerapi.getMarkerIcon(this.getConfig().getString("style.markerIcon", "king")), false);
 		}
 	}
