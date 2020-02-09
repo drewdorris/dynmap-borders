@@ -3,10 +3,6 @@ package com.ruinscraft.countries;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.bukkit.World;
@@ -37,22 +33,24 @@ public class DynmapCountries extends JavaPlugin {
 
 	private double scaling;
 
+	private World world;
+
 	private FeatureSource<SimpleFeatureType, SimpleFeature> featureSource;
 
 	@Override
 	public void onEnable() {
 		/* Get dynmap */
-		dynmap = getServer().getPluginManager().getPlugin("dynmap");
-		if (dynmap == null) {
-			this.getLogger().severe("Need Dynmap!!!");
+		this.dynmap = getServer().getPluginManager().getPlugin("dynmap");
+		if (this.dynmap == null) {
+			this.getLogger().severe("Need Dynmap!");
 			this.getPluginLoader().disablePlugin(this);
 			return;
 		}
 
-		api = (DynmapAPI) dynmap; /* Get API */
+		this.api = (DynmapAPI) dynmap; /* Get API */
 
 		/* If both enabled, activate */
-		if (dynmap.isEnabled()) {
+		if (this.dynmap.isEnabled()) {
 			try {
 				activate();
 			} catch (IOException e) {
@@ -63,9 +61,10 @@ public class DynmapCountries extends JavaPlugin {
 		}
 	}
 
+	// handles everything
 	private void activate() throws IOException {
-		markerapi = api.getMarkerAPI();
-		if(markerapi == null) {
+		this.markerapi = api.getMarkerAPI();
+		if (this.markerapi == null) {
 			this.getLogger().severe("Error loading dynmap marker API!");
 			return;
 		}
@@ -81,34 +80,31 @@ public class DynmapCountries extends JavaPlugin {
 
 		File shapefile = new File(this.getDataFolder(), this.getConfig().getString("shapefilePath"));
 		if (shapefile == null || !shapefile.isFile()) {
-			this.getLogger().warning("shapefile not found!!");
+			this.getLogger().warning("Shapefile not found!");
 			return;
-		}
-
-		Map<String, Serializable> map = new HashMap<>();
-		try {
-			map.put("url", shapefile.toURI().toURL());
-		} catch (MalformedURLException e1) {
-			e1.printStackTrace();
 		}
 
 		FileDataStore store = FileDataStoreFinder.getDataStore(shapefile);
 
 		this.featureSource = store.getFeatureSource();
 
-		/* Now, add marker set for mobs (make it transient) */
+		// Create new countries markerset
 		markerSet = markerapi.getMarkerSet("countries.markerset");
 		if(markerSet == null) {
-			markerSet = markerapi.createMarkerSet("countries.markerset", cfg.getString("layerName", "Countries"), null, false);
+			markerSet = markerapi.createMarkerSet("countries.markerset", cfg.getString("style.layerName", "Countries"), null, false);
 		} else {
-			markerSet.setMarkerSetLabel(cfg.getString("layerName", "Countries"));
+			markerSet.setMarkerSetLabel(cfg.getString("style.layerName", "Countries"));
 		}
 		if (markerSet == null) {
 			this.getLogger().severe("Error creating marker set");
 			return;
 		}
 
-		World world = this.getServer().getWorlds().get(0);
+		this.world = this.getServer().getWorlds().get(cfg.getInt("world"));
+		if (world == null) {
+			this.getLogger().severe("No world found!");
+			return;
+		}
 
 		FeatureCollection<SimpleFeatureType, SimpleFeature> features;
 		try {
@@ -116,7 +112,7 @@ public class DynmapCountries extends JavaPlugin {
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
-		}		
+		}
 
 		FeatureIterator<SimpleFeature> iterator = features.features();
 		int iteration = -1;
@@ -124,7 +120,9 @@ public class DynmapCountries extends JavaPlugin {
 			iteration++;
 			SimpleFeature feature = iterator.next();
 
-			String countryName = (String) feature.getAttribute(4);
+			// name of area
+			// formerly index 4, which was the semi-governing nation over it (Guam -> USA)
+			String countryName = (String) feature.getAttribute(8);
 
 			int index = 0;
 
@@ -177,8 +175,8 @@ public class DynmapCountries extends JavaPlugin {
 						continue;
 					}
 
-					int color = 0xCC66CC;
-					polyline.setLineStyle(3, .5, color);
+					int color = cfg.getInt("style.color", 0xCC66CC);
+					polyline.setLineStyle(cfg.getInt("style.lineThickness", 3), cfg.getDouble("style.lineOpacity", .5), color);
 
 					polygonIndex++;
 				}
@@ -186,27 +184,31 @@ public class DynmapCountries extends JavaPlugin {
 		}
 		iterator.close();
 
-		int minzoom = cfg.getInt("layer.minzoom", 0);
+		int minzoom = cfg.getInt("style.minimumZoom", 0);
 		if (minzoom > 0) markerSet.setMinZoom(minzoom);
-		markerSet.setLayerPriority(cfg.getInt("layer.layerprio", 12));
-		markerSet.setHideByDefault(cfg.getBoolean("layer.hidebydefault", true));
+		markerSet.setLayerPriority(cfg.getInt("style.priority", 12));
+		markerSet.setHideByDefault(cfg.getBoolean("style.hideByDefault", true));
 
-		handleCountryMarkers();
+		if (cfg.getBoolean("style.enableCountryMarkers", true)) handleCountryMarkers();
 
-		this.getLogger().info("version " + this.getDescription().getVersion() + " is activated");
+		this.getLogger().info("Version " + this.getDescription().getVersion() + " is activated!");
 	}
 
 	// only run after activate()
 	public void handleCountryMarkers() throws IOException {
 		Reader reader = this.getTextResource(this.getConfig().getString("countriesFile"));
+		if (reader == null) {
+			this.getLogger().warning("Countries file not found. Country markers not loaded.");
+			return;
+		}
 		for (String string : CharStreams.readLines(reader)) {
 			String[] separated = string.split("\t");
 
 			double x = Double.valueOf(separated[2]) * this.scaling;
 			double z = Double.valueOf(separated[1]) * this.scaling * -1;
 
-			markerSet.createMarker(separated[0], separated[3], 
-					this.getServer().getWorlds().get(0).getName(), x, 64D, z, markerapi.getMarkerIcon("king"), false);
+			markerSet.createMarker(separated[0], separated[3], this.world.getName(), x, 64D, z, 
+					markerapi.getMarkerIcon(this.getConfig().getString("style.markerIcon", "king")), false);
 		}
 	}
 

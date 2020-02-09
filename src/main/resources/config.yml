@@ -1,4 +1,32 @@
+## Shapefile for the country borders
+## This also requires .shx and .dbf files of the same name
+## There's a lot of these on Google you can find, can find one with state borders/etc if needed
+## I used https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/
 shapefilePath: shapefile.shp
-layerName: "Countries"
+## Scaling depends on the size of your Earth map. If 1:1000 scale of Earth, use 120
 scaling: 120
-countriesFile: "countries.txt"
+## File used for country name marker data
+countriesFile: countries.txt
+## Which world to define this for 
+## Probably don't need to change this unless you have your Earth world in the Nether or if it's a second world or something
+world: 0
+style:
+  ## Name that appears when you click the Layer button on the top left of the Dynmap
+  layerName: Countries
+  ## Hex color
+  color: 0xCC66CC
+  ## 1+, or 0 if you don't want country borders at all??
+  lineThickness: 3
+  ## Opacity between 0-1
+  lineOpacity: .5
+  ## Whether country name markers should be enabled
+  enableCountryMarkers: true
+  ## Name of the marker used for the country name marker
+  markerIcon: king
+  ## Whether to have the layer hidden by default
+  hideByDefault: true
+  ## Priority of the layer; determines the position in the list of various layers in the Layer button
+  priority: 12
+  ## Defines how far out you have to zoom out to see the layer
+  ## I don't know why you would need this
+  minimumZoom: 0
