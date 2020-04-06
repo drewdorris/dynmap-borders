@@ -1,10 +1,10 @@
 # Whether country name markers should be enabled
 enableCountryMarkers: true
 
-# Name of the marker used for the country name marker
+# Name of the marker used for the country name markers
 markerIcon: king
 
-# Name that appears when you click the Layer button on the top left of the Dynmap
+# Layer name that appears when you click the Layer button on the top left of the Dynmap
 layerName: Country Borders
 
 # Whether to have the layer hidden by default
@@ -14,7 +14,6 @@ hideByDefault: true
 priority: 12
 
 # Defines how far out you have to zoom out to see the layer
-# I don't know why you would need this
 minimumZoom: 0
 
 shapefiles:
@@ -23,8 +22,7 @@ shapefiles:
     # Shapefile for the country borders
     # This also requires .shx and .dbf files of the same name; all 3 files placed in the plugin's folder
     # I used https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/
-    # This is the only one I've tested with, so other ones may cause issues. You can try them out though
-    # There's a lot of these on Google you can find, can find one with state borders/etc if needed
+    # I haven't tested every shapefile out there, so there are some which may not work
     shapefilePath: shapefile.shp
 
     # Scaling depends on the size of your Earth map. If 1:1000 scale of Earth, use 120
@@ -50,4 +48,22 @@ shapefiles:
       lineThickness: 3
 
       # Opacity between 0-1
+      lineOpacity: .5
+  stateBorders:
+    # Example source for US state borders:
+    # https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
+    shapefilePath: cb_2018_us_region_5m.shp
+
+    scaling: 120
+
+    xOffset: 0
+    zOffset: 0
+
+    y: 64
+
+    world: 0
+    # Style is customizable per each shapefile, so you can make the states a different color!
+    style:
+      color: 0xCC66CC
+      lineThickness: 3
       lineOpacity: .5

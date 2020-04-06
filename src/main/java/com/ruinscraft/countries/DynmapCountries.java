@@ -185,7 +185,7 @@ public class DynmapCountries extends JavaPlugin {
 
 						int polygonIndex = 0;
 						for (String polygon : polygons) {
-							String id = iteration + "_" + index + "_" + polygonIndex;
+							String id = section +  "_" + iteration + "_" + index + "_" + polygonIndex;
 							polygon = polygon.replace("MULTIPOLYGON ", "").replace("(", "").replace(")", "");
 							String[] locations = polygon.split(", ");
 
