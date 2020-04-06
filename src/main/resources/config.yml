@@ -1,37 +1,53 @@
-## Shapefile for the country borders
-## This also requires .shx and .dbf files of the same name
-## There's a lot of these on Google you can find, can find one with state borders/etc if needed
-## I used https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/
-shapefilePath: shapefile.shp
-## Scaling depends on the size of your Earth map. If 1:1000 scale of Earth, use 120
-scaling: 120
-## If your Earth map is off center for some reason, you can shift the x/z axis in blocks
-xOffset: 0
-zOffset: 0
-## Y value for all the borders & markers; maybe used if you use the 3D dynmap
-y: 64
-## File used for country name marker data
-countriesFile: countries.txt
-## Which world to define this for 
-## Probably don't need to change this unless you have your Earth world in the Nether or if it's a second world or something
-world: 0
-style:
-  ## Name that appears when you click the Layer button on the top left of the Dynmap
-  layerName: Countries
-  ## Hex color
-  color: 0xCC66CC
-  ## 1+, or 0 if you don't want country borders at all??
-  lineThickness: 3
-  ## Opacity between 0-1
-  lineOpacity: .5
-  ## Whether country name markers should be enabled
-  enableCountryMarkers: true
-  ## Name of the marker used for the country name marker
-  markerIcon: king
-  ## Whether to have the layer hidden by default
-  hideByDefault: true
-  ## Priority of the layer; determines the position in the list of various layers in the Layer button
-  priority: 12
-  ## Defines how far out you have to zoom out to see the layer
-  ## I don't know why you would need this
-  minimumZoom: 0
+# Whether country name markers should be enabled
+enableCountryMarkers: true
+
+# Name of the marker used for the country name marker
+markerIcon: king
+
+# Name that appears when you click the Layer button on the top left of the Dynmap
+layerName: Country Borders
+
+# Whether to have the layer hidden by default
+hideByDefault: true
+
+# Priority of the layer; determines the position in the list of various layers in the Layer button
+priority: 12
+
+# Defines how far out you have to zoom out to see the layer
+# I don't know why you would need this
+minimumZoom: 0
+
+shapefiles:
+  # You can add as many shapefiles as you would like
+  countryBorders:
+    # Shapefile for the country borders
+    # This also requires .shx and .dbf files of the same name; all 3 files placed in the plugin's folder
+    # I used https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/
+    # This is the only one I've tested with, so other ones may cause issues. You can try them out though
+    # There's a lot of these on Google you can find, can find one with state borders/etc if needed
+    shapefilePath: shapefile.shp
+
+    # Scaling depends on the size of your Earth map. If 1:1000 scale of Earth, use 120
+    # Real life coord * scaling = ingame coord
+    scaling: 120
+
+    # If your Earth map is off center for some reason, you can shift the x/z axis in blocks
+    xOffset: 0
+    zOffset: 0
+
+    # Y value for all the borders & markers; maybe used if you use the 3D dynmap
+    y: 64
+
+    # Which world to define this for
+    # Probably don't need to change this unless you have your Earth world in the Nether or if it's a second world or something
+    world: 0
+
+    style:
+      # Hex color
+      color: 0xCC66CC
+
+      # 1+, or 0 if you don't want country borders at all??
+      lineThickness: 3
+
+      # Opacity between 0-1
+      lineOpacity: .5
