@@ -12,23 +12,30 @@ import org.dynmap.DynmapAPI;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.markers.MarkerSet;
 import org.dynmap.markers.PolyLineMarker;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
+import org.geotools.data.*;
+import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.Feature;
 import org.opengis.feature.FeatureVisitor;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.ProgressListener;
+import org.opengis.referencing.operation.MathTransform;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class DynmapCountries extends JavaPlugin {
@@ -147,30 +154,48 @@ public class DynmapCountries extends JavaPlugin {
 			String fileName = this.getConfig().getString(section + "." + "shapefilePath", "shapefile.shp");
 			File shapefile = new File(this.getDataFolder(), fileName);
 			if (shapefile == null || !shapefile.isFile()) {
-				this.getLogger().warning("Shapefile not found!");
-				this.getPluginLoader().disablePlugin(this);
-				return;
+				this.getLogger().warning("Shapefile " + fileName + " not found!");
+				continue;
 			}
 
 			FileDataStore store = FileDataStoreFinder.getDataStore(shapefile);
 
-			FeatureSource<SimpleFeatureType, SimpleFeature> featureSource = store.getFeatureSource();
+			SimpleFeatureSource featureSource = store.getFeatureSource();
 
 			this.world = this.getServer().getWorlds().get(cfg.getInt(section + "." + "world"));
 			if (world == null) {
 				this.getLogger().severe("No world found!");
+				store.dispose();
 				this.getPluginLoader().disablePlugin(this);
 				return;
 			}
 
+			if (featureSource.getSchema() == null || featureSource.getSchema().getCoordinateReferenceSystem() == null) {
+				this.getLogger().warning("Could not load .prj file for Shapefile " + fileName + ".");
+				store.dispose();
+				continue;
+			}
 			CoordinateReferenceSystem data = featureSource.getSchema().getCoordinateReferenceSystem();
-			System.out.println(data.getCoordinateSystem().getName().getCode());
+			String code = data.getName().getCode();
+			System.out.println(code);
+			if (!code.contains("WGS_1984") && !code.contains("wgs_1984")) {
+				this.getLogger().info("Translating " + fileName + " to a readable format...");
+				try {
+					this.translateCRS(featureSource, shapefile);
+					this.getLogger().info("Translating finished.");
+				} catch (FactoryException e) {
+					e.printStackTrace();
+					store.dispose();
+					continue;
+				}
+			}
 
 			FeatureCollection<SimpleFeatureType, SimpleFeature> features;
 			try {
 				features = featureSource.getFeatures();
 			} catch (IOException e) {
 				e.printStackTrace();
+				store.dispose();
 				this.getPluginLoader().disablePlugin(this);
 				return;
 			}
@@ -291,33 +316,53 @@ public class DynmapCountries extends JavaPlugin {
 		}
 	}
 
-	/**
-	 * Ensure shapefile has no problems (unfinished polygons, etc.)
-	 * @param featureSource feature source
-	 * @return amnt of geometries with issues
-	 * @throws IOException if issues occur
-	 */
-	private int validateFeatureGeometry(SimpleFeatureSource featureSource) throws IOException {
-		final SimpleFeatureCollection featureCollection = featureSource.getFeatures();
+	public void translateCRS(SimpleFeatureSource featureSource, File shapefile) throws FactoryException, IOException {
+		SimpleFeatureType schema = featureSource.getSchema();
 
-		// Rather than use an iterator, create a FeatureVisitor to check each fature
-		class ValidationVisitor implements FeatureVisitor {
-			public int numInvalidGeometries = 0;
-			public void visit(Feature f) {
-				SimpleFeature feature = (SimpleFeature) f;
-				Geometry geom = (Geometry) feature.getDefaultGeometry();
-				if (geom != null && !geom.isValid()) {
-					numInvalidGeometries++;
-					System.out.println("Invalid Geoemtry: " + feature.getID());
-				}
+		CoordinateReferenceSystem otherCRS = schema.getCoordinateReferenceSystem();
+		CoordinateReferenceSystem worldCRS = DefaultGeographicCRS.WGS84;
+
+		MathTransform transform = CRS.findMathTransform(otherCRS, worldCRS, true);
+		SimpleFeatureCollection featureCollection = featureSource.getFeatures();
+
+		// how do i file
+		File newFile = new File(this.getDataFolder(), "newshapefile.shp");
+		newFile.createNewFile();
+
+		DataStoreFactorySpi factory = new ShapefileDataStoreFactory();
+		Map<String, Serializable> create = new HashMap<String, Serializable>();
+		create.put("url", newFile.toURI().toURL());
+		create.put("create spatial index", Boolean.TRUE);
+		DataStore dataStore = factory.createNewDataStore(create);
+		SimpleFeatureType featureType = SimpleFeatureTypeBuilder.retype(schema, worldCRS);
+		dataStore.createSchema(featureType);
+
+		Transaction transaction = new DefaultTransaction("Reproject");
+		FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+				dataStore.getFeatureWriterAppend(featureType.getTypeName(), transaction);
+		SimpleFeatureIterator iterator = featureCollection.features();
+		try {
+			while (iterator.hasNext()) {
+				// copy the contents of each feature and transform the geometry
+				SimpleFeature feature = iterator.next();
+				SimpleFeature copy = writer.next();
+				copy.setAttributes(feature.getAttributes());
+
+				Geometry geometry = (Geometry) feature.getDefaultGeometry();
+				Geometry geometry2 = JTS.transform(geometry, transform);
+
+				copy.setDefaultGeometry(geometry2);
+				writer.write();
 			}
+			transaction.commit();
+		} catch (Exception e) {
+			e.printStackTrace();
+			transaction.rollback();
+		} finally {
+			writer.close();
+			iterator.close();
+			transaction.close();
 		}
-
-		ValidationVisitor visitor = new ValidationVisitor();
-
-		// Pass visitor and the progress bar to feature collection
-		featureCollection.accepts(visitor, null);
-		return visitor.numInvalidGeometries;
 	}
 
 }
