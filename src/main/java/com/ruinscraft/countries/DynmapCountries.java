@@ -1,13 +1,8 @@
 package com.ruinscraft.countries;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.util.regex.Pattern;
-
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -20,39 +15,41 @@ import org.dynmap.markers.PolyLineMarker;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
+import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.locationtech.jts.geom.Geometry;
+import org.opengis.feature.Feature;
+import org.opengis.feature.FeatureVisitor;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.util.ProgressListener;
 
-import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
+import java.io.*;
+import java.util.regex.Pattern;
 
 public class DynmapCountries extends JavaPlugin {
 
-	private Plugin dynmap;
 	private DynmapAPI api;
 	private MarkerAPI markerapi;
 	private MarkerSet markerSet;
 
 	private double scaling;
 
-	private int xOffset = 0;
 	private int y = 64;
-	private int zOffset = 0;
 
 	private World world;
 
 	FileConfiguration cfg;
 
-	private FeatureSource<SimpleFeatureType, SimpleFeature> featureSource;
-
 	@Override
 	public void onEnable() {
 		/* Get dynmap */
-		this.dynmap = getServer().getPluginManager().getPlugin("dynmap");
-		if (this.dynmap == null) {
+		Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");
+		if (dynmap == null) {
 			this.getLogger().severe("Need Dynmap!");
 			this.getPluginLoader().disablePlugin(this);
 			return;
@@ -61,30 +58,36 @@ public class DynmapCountries extends JavaPlugin {
 		this.api = (DynmapAPI) dynmap; /* Get API */
 
 		/* If both enabled, activate */
-		if (this.dynmap.isEnabled()) {
+		if (dynmap.isEnabled()) {
 			try {
 				activate();
 			} catch (IOException e) {
 				e.printStackTrace();
 				this.getPluginLoader().disablePlugin(this);
-				return;
 			}
 		}
 	}
 
 	/**
 	 * Used to load config.yml
-	 * @param resource
+	 * @param resource file path
 	 * @return File
 	 */
 	public File loadResource(String resource) {
         File folder = getDataFolder();
-        if (!folder.exists())
-            folder.mkdir();
+        if (!folder.exists()) {
+			if (!folder.mkdir()) {
+				Bukkit.getLogger().warning("Resource " + resource + " could not be loaded");
+				return null;
+			}
+		}
         File resourceFile = new File(folder, resource);
         try {
             if (!resourceFile.exists()) {
-                resourceFile.createNewFile();
+				if (!resourceFile.createNewFile()) {
+					Bukkit.getLogger().warning("Resource " + resource + " could not be created");
+					return null;
+				}
                 try (InputStream in = this.getResource(resource);
                      OutputStream out = new FileOutputStream(resourceFile)) {
                     ByteStreams.copy(in, out);
@@ -98,7 +101,7 @@ public class DynmapCountries extends JavaPlugin {
 
 	/**
 	 * Handles everything
-	 * @throws IOException
+	 * @throws IOException if something happens
 	 */
 	private void activate() throws IOException {
 		this.markerapi = api.getMarkerAPI();
@@ -108,6 +111,9 @@ public class DynmapCountries extends JavaPlugin {
 		}
 
 		File configFile = this.loadResource("config.yml");
+		if (configFile == null) {
+			return;
+		}
 		this.cfg = YamlConfiguration.loadConfiguration(configFile);
 
 		// Create new countries markerset
@@ -132,12 +138,14 @@ public class DynmapCountries extends JavaPlugin {
 		for (String section : cfg.getConfigurationSection("shapefiles").getKeys(false)) {
 			section = "shapefiles." + section;
 			this.scaling = cfg.getDouble(section + "." + "scaling", 120);
-			this.xOffset = cfg.getInt(section + "." + "xOffset", 0);
+			int xOffset = cfg.getInt(section + "." + "xOffset", 0);
 			this.y = cfg.getInt(section + "." + "y", 64);
-			this.zOffset = cfg.getInt(section + "." + "zOffset", 0);
+			int zOffset = cfg.getInt(section + "." + "zOffset", 0);
 
-			File shapefile = new File(this.getDataFolder(),
-					this.getConfig().getString(section + "." + "shapefilePath"));
+			boolean errors = false;
+
+			String fileName = this.getConfig().getString(section + "." + "shapefilePath", "shapefile.shp");
+			File shapefile = new File(this.getDataFolder(), fileName);
 			if (shapefile == null || !shapefile.isFile()) {
 				this.getLogger().warning("Shapefile not found!");
 				this.getPluginLoader().disablePlugin(this);
@@ -146,7 +154,7 @@ public class DynmapCountries extends JavaPlugin {
 
 			FileDataStore store = FileDataStoreFinder.getDataStore(shapefile);
 
-			this.featureSource = store.getFeatureSource();
+			FeatureSource<SimpleFeatureType, SimpleFeature> featureSource = store.getFeatureSource();
 
 			this.world = this.getServer().getWorlds().get(cfg.getInt(section + "." + "world"));
 			if (world == null) {
@@ -154,6 +162,9 @@ public class DynmapCountries extends JavaPlugin {
 				this.getPluginLoader().disablePlugin(this);
 				return;
 			}
+
+			CoordinateReferenceSystem data = featureSource.getSchema().getCoordinateReferenceSystem();
+			System.out.println(data.getCoordinateSystem().getName().getCode());
 
 			FeatureCollection<SimpleFeatureType, SimpleFeature> features;
 			try {
@@ -163,10 +174,9 @@ public class DynmapCountries extends JavaPlugin {
 				this.getPluginLoader().disablePlugin(this);
 				return;
 			}
-			FeatureIterator<SimpleFeature> iterator = features.features();
 
 			int iteration = -1;
-			try {
+			try (FeatureIterator<SimpleFeature> iterator = features.features()) {
 				while (iterator.hasNext()) {
 					iteration++;
 					SimpleFeature feature = iterator.next();
@@ -175,8 +185,12 @@ public class DynmapCountries extends JavaPlugin {
 
 					for (Property property : feature.getProperties()) {
 						index++;
+						if (property.getValue() == null || property.getValue().toString() == null) {
+							errors = true;
+							continue;
+						}
 						String propertyValue = property.getValue().toString();
-						if (!propertyValue.contains("(((")) continue;
+						if (!propertyValue.contains("((")) continue;
 
 						String[] polygons = { propertyValue };
 						if (propertyValue.contains("), (")) {
@@ -194,6 +208,7 @@ public class DynmapCountries extends JavaPlugin {
 							double[] z = new double[locations.length];
 
 							int i = 0;
+							boolean problemWithNumbers = false;
 							for (String location : locations) {
 								String[] coords = location.split(" ");
 								double lat = 0;
@@ -205,6 +220,11 @@ public class DynmapCountries extends JavaPlugin {
 									e.printStackTrace();
 									continue;
 								}
+								if (lat + 180 > 360 || lon + 180 > 360) {
+									errors = true;
+									problemWithNumbers = true;
+									break;
+								}
 								x[i] = (lat * this.scaling) + xOffset;
 
 								y[i] = this.y;
@@ -212,6 +232,7 @@ public class DynmapCountries extends JavaPlugin {
 								z[i] = (lon * this.scaling) * -1 + zOffset;
 								i++;
 							}
+							if (problemWithNumbers) continue;
 
 							if (markerSet.findPolyLineMarker(id) != null) markerSet.findPolyLineMarker(id).deleteMarker();
 
@@ -230,12 +251,17 @@ public class DynmapCountries extends JavaPlugin {
 						}
 					}
 				}
-				iterator.close();
 			} catch (Exception e) { // can happen from a bad cast or something
+				store.dispose();
 				e.printStackTrace();
-				iterator.close();
 				this.getPluginLoader().disablePlugin(this);
 				return;
+			} finally {
+				store.dispose();
+			}
+			if (errors) {
+				Bukkit.getLogger().warning("Shapefile " + fileName + " had errors on load and may be partially" +
+						" or completely unloaded. Shapefile is likely incorrectly formatted");
 			}
 		}
 
@@ -263,6 +289,35 @@ public class DynmapCountries extends JavaPlugin {
 			markerSet.createMarker(separated[0], separated[3], this.world.getName(), x, this.y, z, 
 					markerapi.getMarkerIcon(this.getConfig().getString("markerIcon", "king")), false);
 		}
+	}
+
+	/**
+	 * Ensure shapefile has no problems (unfinished polygons, etc.)
+	 * @param featureSource feature source
+	 * @return amnt of geometries with issues
+	 * @throws IOException if issues occur
+	 */
+	private int validateFeatureGeometry(SimpleFeatureSource featureSource) throws IOException {
+		final SimpleFeatureCollection featureCollection = featureSource.getFeatures();
+
+		// Rather than use an iterator, create a FeatureVisitor to check each fature
+		class ValidationVisitor implements FeatureVisitor {
+			public int numInvalidGeometries = 0;
+			public void visit(Feature f) {
+				SimpleFeature feature = (SimpleFeature) f;
+				Geometry geom = (Geometry) feature.getDefaultGeometry();
+				if (geom != null && !geom.isValid()) {
+					numInvalidGeometries++;
+					System.out.println("Invalid Geoemtry: " + feature.getID());
+				}
+			}
+		}
+
+		ValidationVisitor visitor = new ValidationVisitor();
+
+		// Pass visitor and the progress bar to feature collection
+		featureCollection.accepts(visitor, null);
+		return visitor.numInvalidGeometries;
 	}
 
 }
