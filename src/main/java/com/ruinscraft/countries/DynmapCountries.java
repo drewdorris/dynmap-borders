@@ -56,9 +56,10 @@ public class DynmapCountries extends JavaPlugin {
 	public void onEnable() {
 		/* Get dynmap */
 		Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");
-		if (dynmap == null) {
-			this.getLogger().severe("Need Dynmap!");
-			this.getPluginLoader().disablePlugin(this);
+
+		if (!(dynmap instanceof DynmapAPI)) {
+			getLogger().warning("Dynmap not found");
+			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
 
@@ -70,7 +71,7 @@ public class DynmapCountries extends JavaPlugin {
 				activate();
 			} catch (IOException e) {
 				e.printStackTrace();
-				this.getPluginLoader().disablePlugin(this);
+				getServer().getPluginManager().disablePlugin(this);
 			}
 		}
 	}
