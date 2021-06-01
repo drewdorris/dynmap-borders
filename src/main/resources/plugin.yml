@@ -3,4 +3,4 @@ name: ${name}
 version: ${version}
 authors: [StupidDrew9]
 depend: [dynmap]
-api-version: 1.13
+api-version: 1.16
