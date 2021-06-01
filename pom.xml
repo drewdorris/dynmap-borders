@@ -52,12 +52,6 @@
             <artifactId>gt-shapefile</artifactId>
             <version>22.2</version>
             <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.media</groupId>
-                    <artifactId>jai-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 
