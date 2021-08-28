@@ -34,6 +34,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -144,7 +145,7 @@ public class DynmapCountries extends JavaPlugin {
 
 		for (String section : cfg.getConfigurationSection("shapefiles").getKeys(false)) {
 			section = "shapefiles." + section;
-			this.scaling = cfg.getDouble(section + "." + "scaling", 120);
+			this.scaling = 120000 / cfg.getDouble(section + "." + "scaling", 1000);
 			int xOffset = cfg.getInt(section + "." + "xOffset", 0);
 			this.y = cfg.getInt(section + "." + "y", 64);
 			int zOffset = cfg.getInt(section + "." + "zOffset", 0);
@@ -162,7 +163,7 @@ public class DynmapCountries extends JavaPlugin {
 
 			SimpleFeatureSource featureSource = store.getFeatureSource();
 
-			this.world = this.getServer().getWorlds().get(cfg.getInt(section + "." + "world"));
+			this.world = this.getServer().getWorld(cfg.getString(section + "." + "world"));
 			if (world == null) {
 				this.getLogger().severe("No world found!");
 				store.dispose();
@@ -326,7 +327,8 @@ public class DynmapCountries extends JavaPlugin {
 		SimpleFeatureCollection featureCollection = featureSource.getFeatures();
 
 		// how do i file
-		File newFile = new File(this.getDataFolder(), "newshapefile.shp");
+		System.out.println(shapefile.getParent() + "   " + shapefile.getName());
+		File newFile = new File(shapefile.getParent(), shapefile.getName() + "copying.shp");
 		newFile.createNewFile();
 
 		DataStoreFactorySpi factory = new ShapefileDataStoreFactory();
