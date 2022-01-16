@@ -1,6 +1,9 @@
 # Whether country name markers should be enabled
 enableCountryMarkers: true
 
+# Name of the world that the markers are placed in
+countryMarkersWorld: world
+
 # Name of the marker used for the country name markers
 # (configure markers in Dynmap; you can make custom markers)
 markerIcon: king
@@ -24,12 +27,13 @@ shapefiles:
   # Be careful adding very high quality shapefiles as this increases the time to load the Dynmap
   # You can use online tools to reduce the quality of shapefiles
   countryBorders:
-    # Shapefile for the country borders
-    # Requires .shx, .dbf, and .prj files of the same name.
+    # Name of shapefile
+    # (without file extension, so putting "countryborders" will mean a file named "countryborders.shp")
+    # Requires .shp, .shx, .dbf, and .prj files of the same name.
     # Place all 4 items in the plugin's folder (/plugins/dynmap-countries/)
     # I used https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/
     # I haven't tested every shapefile out there, so there are some which may not work
-    shapefilePath: countryborders.shp
+    shapefilePath: countryborders
 
     # Scaling depends on the size of your Earth map.
     # If 1:1000 scale of Earth, use 1000
@@ -60,7 +64,7 @@ shapefiles:
   stateBorders:
     # Example source for US state borders:
     # https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
-    shapefilePath: cb_2018_us_region_5m.shp
+    shapefilePath: cb_2018_us_region_5m
 
     scaling: 1000
 

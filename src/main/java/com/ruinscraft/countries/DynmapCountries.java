@@ -32,7 +32,9 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -46,8 +48,6 @@ public class DynmapCountries extends JavaPlugin {
 
 	private int y = 64;
 
-	private World world;
-
 	FileConfiguration cfg;
 
 	@Override
@@ -56,7 +56,7 @@ public class DynmapCountries extends JavaPlugin {
 		Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");
 
 		if (!(dynmap instanceof DynmapAPI)) {
-			getLogger().warning("Dynmap not found");
+			this.getLogger().warning("Dynmap not found");
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
@@ -75,7 +75,7 @@ public class DynmapCountries extends JavaPlugin {
 	}
 
 	/**
-	 * Used to load config.yml
+	 * Used to load config.yml and shapefile resources
 	 * @param resource file path
 	 * @return File
 	 */
@@ -83,7 +83,7 @@ public class DynmapCountries extends JavaPlugin {
         File folder = getDataFolder();
         if (!folder.exists()) {
 			if (!folder.mkdir()) {
-				Bukkit.getLogger().warning("Resource " + resource + " could not be loaded");
+				this.getLogger().warning("Resource " + resource + " could not be loaded");
 				return null;
 			}
 		}
@@ -91,13 +91,23 @@ public class DynmapCountries extends JavaPlugin {
         try {
             if (!resourceFile.exists()) {
 				if (!resourceFile.createNewFile()) {
-					Bukkit.getLogger().warning("Resource " + resource + " could not be created");
+					this.getLogger().warning("Resource " + resource + " could not be created");
 					return null;
 				}
                 try (InputStream in = this.getResource(resource);
                      OutputStream out = new FileOutputStream(resourceFile)) {
+                	if (in == null || out == null) {
+						this.getLogger().warning("Resource " + resource + " could not be located");
+						return resourceFile;
+					}
                     ByteStreams.copy(in, out);
                 }
+                // I don't think this section of code is ever reached. But doesn't hurt to leave it in
+                if (!resourceFile.isFile() || resourceFile.length() == 0) {
+                	resourceFile.delete();
+					this.getLogger().warning("Resource " + resource + " was not found");
+					return resourceFile;
+				}
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -150,18 +160,42 @@ public class DynmapCountries extends JavaPlugin {
 
 			boolean errors = false;
 
-			String fileName = this.getConfig().getString(section + "." + "shapefilePath", "countryborders.shp");
-			File shapefile = new File(this.getDataFolder(), fileName);
+			String fileName = this.getConfig().getString(section + "." + "shapefilePath", "countryborders");
+			File shapefile = new File(this.getDataFolder(), fileName + ".shp");
 			if (shapefile == null || !shapefile.isFile()) {
-				this.getLogger().warning("Shapefile " + fileName + " not found!");
-				continue;
+				shapefile = this.loadResource(fileName + ".shp");
+				if (!shapefile.isFile() || shapefile.length() == 0) {
+					this.getLogger().warning("Shapefile " + fileName + " not found!");
+					shapefile.delete();
+					continue;
+				} else {
+					File shx = this.loadResource(fileName + ".shx");
+					File prj = this.loadResource(fileName + ".prj");
+					File dbf = this.loadResource(fileName + ".dbf");
+					List<File> additionalFiles = List.of(shx, prj, dbf);
+
+					boolean exit = false;
+					for (File file : additionalFiles) {
+						if (!file.isFile() || file.length() == 0) {
+							this.getLogger().warning(file.getName() + " not found! ");
+							file.delete();
+							exit = true;
+							continue;
+						}
+					}
+					if (exit) {
+						this.getLogger().warning("One or more additional files could not be located for shapefile " + fileName + ".shp");
+						this.getLogger().warning("Shapefile" + fileName + ".shp not loaded!");
+						continue;
+					}
+				}
 			}
 
 			FileDataStore store = FileDataStoreFinder.getDataStore(shapefile);
 
 			SimpleFeatureSource featureSource = store.getFeatureSource();
 
-			this.world = this.getServer().getWorld(cfg.getString(section + "." + "world"));
+			World world = this.getServer().getWorld(cfg.getString(section + "." + "world"));
 			if (world == null) {
 				this.getLogger().severe("No world found!");
 				store.dispose();
@@ -284,8 +318,10 @@ public class DynmapCountries extends JavaPlugin {
 				store.dispose();
 			}
 			if (errors) {
-				Bukkit.getLogger().warning("Shapefile " + fileName + " had errors on load and may be partially" +
+				this.getLogger().warning("Shapefile " + fileName + " had errors on load and may be partially" +
 						" or completely unloaded. Shapefile is likely incorrectly formatted");
+			} else {
+				this.getLogger().info("Shapefile " + fileName + " successfully loaded!");
 			}
 		}
 
@@ -304,15 +340,24 @@ public class DynmapCountries extends JavaPlugin {
 			this.getLogger().warning("Countries file not found. Country markers not loaded.");
 			return;
 		}
+
+		String worldName = this.getConfig().getString("countryMarkersWorld", "world");
+		World world = Bukkit.getWorld(worldName);
+		if (world == null) {
+			this.getLogger().warning("World name for country markers is null! Country markers not loaded.");
+			return;
+		}
+
 		for (String string : CharStreams.readLines(reader)) {
 			String[] separated = string.split("\t");
 
 			double x = Double.valueOf(separated[2]) * this.scaling;
 			double z = Double.valueOf(separated[1]) * this.scaling * -1;
 
-			markerSet.createMarker(separated[0], separated[3], this.world.getName(), x, this.y, z, 
+			markerSet.createMarker(separated[0], separated[3], world.getName(), x, this.y, z,
 					markerapi.getMarkerIcon(this.getConfig().getString("markerIcon", "king")), false);
 		}
+		this.getLogger().info("Country markers enabled!");
 	}
 
 	public void translateCRS(SimpleFeatureSource featureSource, File shapefile) throws FactoryException, IOException {
