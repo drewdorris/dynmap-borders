@@ -24,8 +24,6 @@ import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -34,7 +32,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -153,7 +150,7 @@ public class DynmapCountries extends JavaPlugin {
 
 			boolean errors = false;
 
-			String fileName = this.getConfig().getString(section + "." + "shapefilePath", "shapefile.shp");
+			String fileName = this.getConfig().getString(section + "." + "shapefilePath", "countryborders.shp");
 			File shapefile = new File(this.getDataFolder(), fileName);
 			if (shapefile == null || !shapefile.isFile()) {
 				this.getLogger().warning("Shapefile " + fileName + " not found!");
