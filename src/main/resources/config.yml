@@ -18,14 +18,14 @@ countryMarkers:
 
   # Name of the Dynmap marker used for the country name markers
   # (configure markers in Dynmap; you can make custom markers)
-  markerName: king
+  markerIconName: king
 
   # Name of the world that the markers are placed in
   world: world
 
   # Scaling depends on the size of your Earth map.
   # If 1:1000 scale of Earth, use 1000
-  scaling: 4000
+  scaling: 1000
 
   # If your Earth map is off center, you can shift the x/z of the center in blocks
   xOffset: 0
@@ -46,7 +46,7 @@ shapefiles:
     # Place all 4 items in the plugin's folder (/plugins/dynmap-countries/)
     # I used https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/
     # I haven't tested every shapefile out there, so there are some which may not work
-    shapefilePath: countryborders
+    shapefileName: countryborders
 
     # Scaling depends on the size of your Earth map.
     # If 1:1000 scale of Earth, use 1000
@@ -65,19 +65,20 @@ shapefiles:
 
     # Style of the border on dynmap
     style:
-      # Hex color
+      # Hex color of the border line
       # Use a color wheel, example https://htmlcolorcodes.com/color-picker/
       color: 0xCC66CC
 
       # Set thickness of the border line. 1+
-      lineThickness: 2
+      thickness: 2
 
-      # Opacity between 0-1. Lower = more transparent
-      lineOpacity: .5
+      # Set opacity of the border line. 0-1; lower value = more transparent
+      opacity: .5
+
   stateBorders:
     # Example source for US state borders:
     # https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
-    shapefilePath: cb_2018_us_region_5m
+    shapefileName: cb_2018_us_region_5m
 
     scaling: 1000
 
@@ -90,5 +91,5 @@ shapefiles:
     # Style is customizable per each shapefile, so you can make the states a different color from countries!
     style:
       color: 0xCC66CC
-      lineThickness: 3
-      lineOpacity: .5
+      thickness: 3
+      opacity: .5

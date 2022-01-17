@@ -33,9 +33,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -161,7 +158,7 @@ public class DynmapCountries extends JavaPlugin {
 
 			boolean errors = false;
 
-			String fileName = this.getConfig().getString(section + "." + "shapefilePath", "countryborders");
+			String fileName = this.getConfig().getString(section + "." + "shapefileName", "countryborders");
 			File shapefile = new File(this.getDataFolder(), fileName + ".shp");
 			if (shapefile == null || !shapefile.isFile()) {
 				shapefile = this.loadResource(fileName + ".shp");
@@ -303,8 +300,8 @@ public class DynmapCountries extends JavaPlugin {
 							}
 
 							int color = cfg.getInt(section + "." + "style.color", 0xCC66CC);
-							polyline.setLineStyle(cfg.getInt(section + "." + "style.lineThickness", 3),
-									cfg.getDouble(section + "." + "style.lineOpacity", .5), color);
+							polyline.setLineStyle(cfg.getInt(section + "." + "style.thickness", 3),
+									cfg.getDouble(section + "." + "style.opacity", .5), color);
 
 							polygonIndex++;
 						}
@@ -336,6 +333,7 @@ public class DynmapCountries extends JavaPlugin {
 	 * @throws IOException
 	 */
 	public void handleCountryMarkers() throws IOException {
+		this.getResource("countries.txt"); // just loading it into the plugin dir so users can access it
 		Reader reader = this.getTextResource("countries.txt");
 		if (reader == null) {
 			this.getLogger().warning("Countries file not found. Country markers not loaded.");
@@ -361,7 +359,7 @@ public class DynmapCountries extends JavaPlugin {
 			double y = this.getConfig().getInt("countryMarkers.y", 64);
 			double z = (Double.valueOf(separated[1]) * scaling * -1) + zOffset;
 
-			MarkerIcon marker = markerapi.getMarkerIcon(this.getConfig().getString("countryMarkers.markerName", "king"));
+			MarkerIcon marker = markerapi.getMarkerIcon(this.getConfig().getString("countryMarkers.markerIconName", "king"));
 
 			markerSet.createMarker(separated[0], separated[3], world.getName(), x, y, z, marker, false);
 		}
