@@ -378,7 +378,6 @@ public class DynmapCountries extends JavaPlugin {
 		SimpleFeatureCollection featureCollection = featureSource.getFeatures();
 
 		// how do i file
-		System.out.println(shapefile.getParent() + "   " + shapefile.getName());
 		File newFile = new File(shapefile.getParent(), shapefile.getName() + "copying.shp");
 		newFile.createNewFile();
 
@@ -407,21 +406,15 @@ public class DynmapCountries extends JavaPlugin {
 				Geometry geometry2 = JTS.transform(geometry, transform);
 
 				copy.setDefaultGeometry(geometry2);
-				System.out.println("ok6");
 				writer.write();
 			}
-			System.out.println("ok5");
 		} catch (Exception e) {
 			e.printStackTrace();
 			transaction.rollback();
 		} finally {
-			System.out.println("ok12");
 			writer.close();
-			System.out.println("ok11");
 			iterator.close();
-			System.out.println("ok9");
 			transaction.commit();
-			System.out.println("ok7");
 			transaction.close();
 		}
 
