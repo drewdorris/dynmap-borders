@@ -1,13 +1,3 @@
-# Whether country name markers should be enabled
-enableCountryMarkers: true
-
-# Name of the world that the markers are placed in
-countryMarkersWorld: world
-
-# Name of the marker used for the country name markers
-# (configure markers in Dynmap; you can make custom markers)
-markerIcon: king
-
 # Layer name that appears when you click the Layer button on the top left of the Dynmap
 layerName: Country Borders
 
@@ -21,6 +11,29 @@ priority: 12
 # Defines how far out you have to zoom out to see the layer
 # 0 to have it appear at all levels of zoom
 minimumZoom: 0
+
+countryMarkers:
+  # Whether country name markers should be enabled
+  enable: true
+
+  # Name of the Dynmap marker used for the country name markers
+  # (configure markers in Dynmap; you can make custom markers)
+  markerName: king
+
+  # Name of the world that the markers are placed in
+  world: world
+
+  # Scaling depends on the size of your Earth map.
+  # If 1:1000 scale of Earth, use 1000
+  scaling: 4000
+
+  # If your Earth map is off center, you can shift the x/z of the center in blocks
+  xOffset: 0
+  zOffset: 0
+
+  # Y value for the markers
+  # This shouldn't change anything unless you use the 3D Dynmap(?)
+  y: 64
 
 shapefiles:
   # You can add as many shapefiles as you would like
@@ -57,7 +70,7 @@ shapefiles:
       color: 0xCC66CC
 
       # Set thickness of the border line. 1+
-      lineThickness: 3
+      lineThickness: 2
 
       # Opacity between 0-1. Lower = more transparent
       lineOpacity: .5

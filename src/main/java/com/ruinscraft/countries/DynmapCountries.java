@@ -10,6 +10,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapAPI;
 import org.dynmap.markers.MarkerAPI;
+import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
 import org.dynmap.markers.PolyLineMarker;
 import org.geotools.data.*;
@@ -32,6 +33,8 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,8 +46,6 @@ public class DynmapCountries extends JavaPlugin {
 	private DynmapAPI api;
 	private MarkerAPI markerapi;
 	private MarkerSet markerSet;
-
-	private double scaling;
 
 	private int y = 64;
 
@@ -153,10 +154,10 @@ public class DynmapCountries extends JavaPlugin {
 
 		for (String section : cfg.getConfigurationSection("shapefiles").getKeys(false)) {
 			section = "shapefiles." + section;
-			this.scaling = 120000 / cfg.getDouble(section + "." + "scaling", 1000);
-			int xOffset = cfg.getInt(section + "." + "xOffset", 0);
+			double scaling = 120000 / cfg.getDouble(section + "." + "scaling", 1000);
+			double xOffset = cfg.getDouble(section + "." + "xOffset", 0);
 			this.y = cfg.getInt(section + "." + "y", 64);
-			int zOffset = cfg.getInt(section + "." + "zOffset", 0);
+			double zOffset = cfg.getDouble(section + "." + "zOffset", 0);
 
 			boolean errors = false;
 
@@ -283,11 +284,11 @@ public class DynmapCountries extends JavaPlugin {
 									problemWithNumbers = true;
 									break;
 								}
-								x[i] = (lat * this.scaling) + xOffset;
+								x[i] = (lat * scaling) + xOffset;
 
 								y[i] = this.y;
 
-								z[i] = (lon * this.scaling) * -1 + zOffset;
+								z[i] = (lon * scaling) * -1 + zOffset;
 								i++;
 							}
 							if (problemWithNumbers) continue;
@@ -325,7 +326,7 @@ public class DynmapCountries extends JavaPlugin {
 			}
 		}
 
-		if (cfg.getBoolean("enableCountryMarkers", true)) handleCountryMarkers();
+		if (cfg.getBoolean("countryMarkers.enable", true)) handleCountryMarkers();
 		this.getLogger().info("Version " + this.getDescription().getVersion() + " is activated!");
 	}
 
@@ -341,21 +342,28 @@ public class DynmapCountries extends JavaPlugin {
 			return;
 		}
 
-		String worldName = this.getConfig().getString("countryMarkersWorld", "world");
+		String worldName = this.getConfig().getString("countryMarkers.world", "world");
 		World world = Bukkit.getWorld(worldName);
 		if (world == null) {
 			this.getLogger().warning("World name for country markers is null! Country markers not loaded.");
 			return;
 		}
 
+		double scaling = this.getConfig().getDouble("countryMarkers.scaling", 1000);
+
 		for (String string : CharStreams.readLines(reader)) {
 			String[] separated = string.split("\t");
 
-			double x = Double.valueOf(separated[2]) * this.scaling;
-			double z = Double.valueOf(separated[1]) * this.scaling * -1;
+			double xOffset = this.getConfig().getDouble("countryMarkers.xOffset", 0);
+			double zOffset = this.getConfig().getDouble("countryMarkers.zOffset", 0);
 
-			markerSet.createMarker(separated[0], separated[3], world.getName(), x, this.y, z,
-					markerapi.getMarkerIcon(this.getConfig().getString("markerIcon", "king")), false);
+			double x = (Double.valueOf(separated[2]) * scaling) + xOffset;
+			double y = this.getConfig().getInt("countryMarkers.y", 64);
+			double z = (Double.valueOf(separated[1]) * scaling * -1) + zOffset;
+
+			MarkerIcon marker = markerapi.getMarkerIcon(this.getConfig().getString("countryMarkers.markerName", "king"));
+
+			markerSet.createMarker(separated[0], separated[3], world.getName(), x, y, z, marker, false);
 		}
 		this.getLogger().info("Country markers enabled!");
 	}
@@ -382,9 +390,11 @@ public class DynmapCountries extends JavaPlugin {
 		SimpleFeatureType featureType = SimpleFeatureTypeBuilder.retype(schema, worldCRS);
 		dataStore.createSchema(featureType);
 
+		String createdName = dataStore.getTypeNames()[0];
+
 		Transaction transaction = new DefaultTransaction("Reproject");
 		FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-				dataStore.getFeatureWriterAppend(featureType.getTypeName(), transaction);
+				dataStore.getFeatureWriterAppend(createdName, transaction);
 		SimpleFeatureIterator iterator = featureCollection.features();
 		try {
 			while (iterator.hasNext()) {
@@ -397,16 +407,29 @@ public class DynmapCountries extends JavaPlugin {
 				Geometry geometry2 = JTS.transform(geometry, transform);
 
 				copy.setDefaultGeometry(geometry2);
+				System.out.println("ok6");
 				writer.write();
 			}
-			transaction.commit();
+			System.out.println("ok5");
 		} catch (Exception e) {
 			e.printStackTrace();
 			transaction.rollback();
 		} finally {
+			System.out.println("ok12");
 			writer.close();
+			System.out.println("ok11");
 			iterator.close();
+			System.out.println("ok9");
+			transaction.commit();
+			System.out.println("ok7");
 			transaction.close();
+		}
+
+		File folder = shapefile.getParentFile();
+		for (File file : folder.listFiles()) {
+			if (file.getName().contains(shapefile.getName() + "copying")) {
+				file.delete();
+			}
 		}
 	}
 
