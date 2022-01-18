@@ -81,12 +81,14 @@ public class DynmapCountries extends JavaPlugin {
         File folder = getDataFolder();
         if (!folder.exists()) {
 			if (!folder.mkdir()) {
-				this.getLogger().warning("Resource " + resource + " could not be loaded");
+				this.getLogger().warning("Resource " + resource + " could not be loaded. Data folder could not be made");
 				return null;
 			}
 		}
         File resourceFile = new File(folder, resource);
         try {
+        	// if file not already there, it is loaded from the jar
+			// if it is not in the jar, give up
             if (!resourceFile.exists()) {
 				if (!resourceFile.createNewFile()) {
 					this.getLogger().warning("Resource " + resource + " could not be created");
@@ -107,7 +109,7 @@ public class DynmapCountries extends JavaPlugin {
 					return resourceFile;
 				}
             }
-        } catch (Exception e) {
+        } catch (Exception e) { // file stuff always can have exceptions. stay safe
             e.printStackTrace();
         }
         return resourceFile;
@@ -208,7 +210,7 @@ public class DynmapCountries extends JavaPlugin {
 			}
 			CoordinateReferenceSystem data = featureSource.getSchema().getCoordinateReferenceSystem();
 			String code = data.getName().getCode();
-			System.out.println(code);
+			this.getLogger().info("Shapefile format: " + code);
 			if (!code.contains("WGS_1984") && !code.contains("wgs_1984")) {
 				this.getLogger().info("Translating " + fileName + " to a readable format...");
 				try {
@@ -276,7 +278,7 @@ public class DynmapCountries extends JavaPlugin {
 									e.printStackTrace();
 									continue;
 								}
-								if (lat + 180 > 360 || lon + 180 > 360) {
+								if (lat > 180 || lon + 90 > 180) {
 									errors = true;
 									problemWithNumbers = true;
 									break;
@@ -323,7 +325,10 @@ public class DynmapCountries extends JavaPlugin {
 			}
 		}
 
-		if (cfg.getBoolean("countryMarkers.enable", true)) handleCountryMarkers();
+		if (cfg.getBoolean("countryMarkers.enable", true)) {
+			handleCountryMarkers();
+		}
+
 		this.getLogger().info("Version " + this.getDescription().getVersion() + " is activated!");
 	}
 
@@ -333,8 +338,8 @@ public class DynmapCountries extends JavaPlugin {
 	 * @throws IOException
 	 */
 	public void handleCountryMarkers() throws IOException {
-		this.getResource("countries.txt"); // just loading it into the plugin dir so users can access it
-		Reader reader = this.getTextResource("countries.txt");
+		File countriesSetFile = this.loadResource("countries.txt"); // just loading it into the plugin dir so it can be accessed
+		FileReader reader = new FileReader(countriesSetFile);
 		if (reader == null) {
 			this.getLogger().warning("Countries file not found. Country markers not loaded.");
 			return;
@@ -347,7 +352,7 @@ public class DynmapCountries extends JavaPlugin {
 			return;
 		}
 
-		double scaling = this.getConfig().getDouble("countryMarkers.scaling", 1000);
+		double scaling = 120000 / this.getConfig().getDouble("countryMarkers.scaling", 1000);
 
 		for (String string : CharStreams.readLines(reader)) {
 			String[] separated = string.split("\t");
@@ -359,9 +364,9 @@ public class DynmapCountries extends JavaPlugin {
 			double y = this.getConfig().getInt("countryMarkers.y", 64);
 			double z = (Double.valueOf(separated[1]) * scaling * -1) + zOffset;
 
-			MarkerIcon marker = markerapi.getMarkerIcon(this.getConfig().getString("countryMarkers.markerIconName", "king"));
+			MarkerIcon markerIcon = markerapi.getMarkerIcon(this.getConfig().getString("countryMarkers.markerIconName", "king"));
 
-			markerSet.createMarker(separated[0], separated[3], world.getName(), x, y, z, marker, false);
+			markerSet.createMarker(separated[0], separated[3], world.getName(), x, y, z, markerIcon, false);
 		}
 		this.getLogger().info("Country markers enabled!");
 	}
@@ -416,6 +421,7 @@ public class DynmapCountries extends JavaPlugin {
 			transaction.close();
 		}
 
+		// kinda sketchy way of deleting the copy files
 		File folder = shapefile.getParentFile();
 		for (File file : folder.listFiles()) {
 			if (file.getName().contains(shapefile.getName() + "copying")) {

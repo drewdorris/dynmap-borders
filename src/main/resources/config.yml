@@ -38,7 +38,7 @@ countryMarkers:
 shapefiles:
   # You can add as many shapefiles as you would like
   # Be careful adding very high quality shapefiles as this increases the time to load the Dynmap
-  # You can use online tools to reduce the quality of shapefiles
+  # You can use online tools to reduce the quality of shapefiles (mapshaper.org is one)
   countryBorders:
     # Name of shapefile
     # (without file extension, so putting "countryborders" will mean a file named "countryborders.shp")
