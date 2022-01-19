@@ -8,9 +8,18 @@ hideByDefault: false
 # Higher number = lower priority
 priority: 12
 
-# Defines how far out you have to zoom out to see the layer
-# 0 to have it appear at all levels of zoom
-minimumZoom: 0
+# Defines how far you have to zoom in to see the layer
+# 0 is zoomed farthest out, higher number = closer zoom
+# If set to 1, the layer doesn't appear if you're zoomed all the way out
+# Set to -1 for no minimum
+# If you set min/max zoom for individual markers, it overrides this setting
+minimumZoom: -1
+
+# Defines how far you have to zoom out to see the layer
+# 0 is zoomed farthest out, higher number = closer zoom
+# If set to 0, the layer only appears if you're zoomed all the way out
+# Set to -1 for no maximum
+maximumZoom: -1
 
 countryMarkers:
   # Whether country name markers should be enabled
@@ -34,6 +43,19 @@ countryMarkers:
   # Y value for the markers
   # This shouldn't change anything unless you use the 3D Dynmap(?)
   y: 64
+
+  # Defines how far you have to zoom in to see the layer
+  # 0 is zoomed farthest out, higher number = closer zoom
+  # If set to 1, the layer doesn't appear if you're zoomed all the way out
+  # Set to -1 for no minimum
+  # If you set min/max zoom for individual markers, it overrides this setting
+  minimumZoom: -1
+
+  # Defines how far you have to zoom out to see the layer
+  # 0 is zoomed farthest out, higher number = closer zoom
+  # If set to 0, the layer only appears if you're zoomed all the way out
+  # Set to -1 for no maximum
+  maximumZoom: -1
 
 shapefiles:
   # You can add as many shapefiles as you would like
@@ -59,6 +81,19 @@ shapefiles:
     # Y value for the border lines
     # This shouldn't change anything unless you use the 3D Dynmap(?)
     y: 64
+
+    # Defines how far you have to zoom in to see the layer
+    # 0 is zoomed farthest out, higher number = closer zoom
+    # If set to 1, the layer doesn't appear if you're zoomed all the way out
+    # Set to -1 for no minimum
+    # If you set min/max zoom for individual markers, it overrides this setting
+    minimumZoom: -1
+
+    # Defines how far you have to zoom out to see the layer
+    # 0 is zoomed farthest out, higher number = closer zoom
+    # If set to 0, the layer only appears if you're zoomed all the way out
+    # Set to -1 for no maximum
+    maximumZoom: -1
 
     # World name to define this border for
     world: world
@@ -86,6 +121,9 @@ shapefiles:
     zOffset: 0
 
     y: 64
+
+    minimumZoom: -1
+    maximumZoom: -1
 
     world: world
     # Style is customizable per each shapefile, so you can make the states a different color from countries!

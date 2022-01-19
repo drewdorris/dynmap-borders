@@ -146,8 +146,11 @@ public class DynmapCountries extends JavaPlugin {
 			return;
 		}
 
-		int minzoom = cfg.getInt("minimumZoom", 0);
-		if (minzoom > 0) markerSet.setMinZoom(minzoom);
+		int minZoom = cfg.getInt("minimumZoom", -1);
+		markerSet.setMinZoom(minZoom);
+		int maxZoom = cfg.getInt("maximumZoom", -1);
+		markerSet.setMaxZoom(maxZoom);
+
 		markerSet.setLayerPriority(cfg.getInt("priority", 12));
 		markerSet.setHideByDefault(cfg.getBoolean("hideByDefault", true));
 
@@ -158,9 +161,11 @@ public class DynmapCountries extends JavaPlugin {
 			this.y = cfg.getInt(section + "." + "y", 64);
 			double zOffset = cfg.getDouble(section + "." + "zOffset", 0);
 
+			// get min/max zoom for indiv layers
+
 			boolean errors = false;
 
-			String fileName = this.getConfig().getString(section + "." + "shapefileName", "countryborders");
+			String fileName = cfg.getString(section + "." + "shapefileName", "countryborders");
 			File shapefile = new File(this.getDataFolder(), fileName + ".shp");
 			if (shapefile == null || !shapefile.isFile()) {
 				shapefile = this.loadResource(fileName + ".shp");
@@ -266,7 +271,6 @@ public class DynmapCountries extends JavaPlugin {
 							double[] z = new double[locations.length];
 
 							int i = 0;
-							boolean problemWithNumbers = false;
 							for (String location : locations) {
 								String[] coords = location.split(" ");
 								double lat = 0;
@@ -280,8 +284,6 @@ public class DynmapCountries extends JavaPlugin {
 								}
 								if (lat > 180 || lon + 90 > 180) {
 									errors = true;
-									problemWithNumbers = true;
-									break;
 								}
 								x[i] = (lat * scaling) + xOffset;
 
@@ -290,7 +292,6 @@ public class DynmapCountries extends JavaPlugin {
 								z[i] = (lon * scaling) * -1 + zOffset;
 								i++;
 							}
-							if (problemWithNumbers) continue;
 
 							if (markerSet.findPolyLineMarker(id) != null) markerSet.findPolyLineMarker(id).deleteMarker();
 
@@ -319,7 +320,7 @@ public class DynmapCountries extends JavaPlugin {
 			}
 			if (errors) {
 				this.getLogger().warning("Shapefile " + fileName + " had errors on load and may be partially" +
-						" or completely unloaded. Shapefile is likely incorrectly formatted");
+						" or completely unloaded. Shapefile is likely incorrectly formatted, or goes outside of normal borders");
 			} else {
 				this.getLogger().info("Shapefile " + fileName + " successfully loaded!");
 			}
@@ -351,6 +352,8 @@ public class DynmapCountries extends JavaPlugin {
 			this.getLogger().warning("World name for country markers is null! Country markers not loaded.");
 			return;
 		}
+
+		// get min/max zoom setting
 
 		double scaling = 120000 / this.getConfig().getDouble("countryMarkers.scaling", 1000);
 
