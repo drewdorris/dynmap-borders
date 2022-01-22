@@ -41,8 +41,6 @@ public class DynmapCountries extends JavaPlugin {
 	private MarkerAPI markerapi;
 	private MarkerSet markerSet;
 
-	private int y = 64;
-
 	FileConfiguration cfg;
 
 	@Override
@@ -153,7 +151,7 @@ public class DynmapCountries extends JavaPlugin {
 			section = "shapefiles." + section;
 			double scaling = 120000 / cfg.getDouble(section + "." + "scaling", 1000);
 			double xOffset = cfg.getDouble(section + "." + "xOffset", 0);
-			this.y = cfg.getInt(section + "." + "y", 64);
+			double yMarker = cfg.getInt(section + "." + "y", 64);
 			double zOffset = cfg.getDouble(section + "." + "zOffset", 0);
 
 			// get min/max zoom for indiv layers
@@ -286,7 +284,7 @@ public class DynmapCountries extends JavaPlugin {
 								}
 								x[i] = (lat * scaling) + xOffset;
 
-								y[i] = this.y;
+								y[i] = yMarker;
 
 								z[i] = (lon * scaling) * -1 + zOffset;
 								i++;
