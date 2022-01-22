@@ -9,10 +9,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapAPI;
-import org.dynmap.markers.MarkerAPI;
-import org.dynmap.markers.MarkerIcon;
-import org.dynmap.markers.MarkerSet;
-import org.dynmap.markers.PolyLineMarker;
+import org.dynmap.markers.*;
 import org.geotools.data.*;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -147,9 +144,7 @@ public class DynmapCountries extends JavaPlugin {
 		}
 
 		int minZoom = cfg.getInt("minimumZoom", -1);
-		markerSet.setMinZoom(minZoom);
 		int maxZoom = cfg.getInt("maximumZoom", -1);
-		markerSet.setMaxZoom(maxZoom);
 
 		markerSet.setLayerPriority(cfg.getInt("priority", 12));
 		markerSet.setHideByDefault(cfg.getBoolean("hideByDefault", true));
@@ -162,6 +157,10 @@ public class DynmapCountries extends JavaPlugin {
 			double zOffset = cfg.getDouble(section + "." + "zOffset", 0);
 
 			// get min/max zoom for indiv layers
+			int minZoomForShape = cfg.getInt(section + "." + "minimumZoom", -1);
+			if (minZoomForShape == -1) minZoomForShape = minZoom;
+			int maxZoomForShape = cfg.getInt(section + "." + "maximumZoom", -1);
+			if (maxZoomForShape == -1) maxZoomForShape = maxZoom;
 
 			boolean errors = false;
 
@@ -305,6 +304,10 @@ public class DynmapCountries extends JavaPlugin {
 							int color = cfg.getInt(section + "." + "style.color", 0xCC66CC);
 							polyline.setLineStyle(cfg.getInt(section + "." + "style.thickness", 3),
 									cfg.getDouble(section + "." + "style.opacity", .5), color);
+							if (minZoomForShape > -1) polyline.setMinZoom(minZoomForShape);
+							if (maxZoomForShape > -1) polyline.setMaxZoom(maxZoomForShape);
+							//polyline.setLabel("test");
+							//polyline.setLabel("test2");
 
 							polygonIndex++;
 						}
@@ -346,30 +349,36 @@ public class DynmapCountries extends JavaPlugin {
 			return;
 		}
 
-		String worldName = this.getConfig().getString("countryMarkers.world", "world");
+		String worldName = cfg.getString("countryMarkers.world", "world");
 		World world = Bukkit.getWorld(worldName);
 		if (world == null) {
 			this.getLogger().warning("World name for country markers is null! Country markers not loaded.");
 			return;
 		}
 
-		// get min/max zoom setting
+		int minZoom = cfg.getInt("countryMarkers.minimumZoom", -1);
+		if (minZoom == -1) minZoom = cfg.getInt("minimumZoom", -1);
+		int maxZoom = cfg.getInt("countryMarkers.maximumZoom", -1);
+		if (maxZoom == -1) maxZoom = cfg.getInt("maximumZoom", -1);
 
-		double scaling = 120000 / this.getConfig().getDouble("countryMarkers.scaling", 1000);
+		double scaling = 120000 / cfg.getDouble("countryMarkers.scaling", 1000);
 
 		for (String string : CharStreams.readLines(reader)) {
 			String[] separated = string.split("\t");
 
-			double xOffset = this.getConfig().getDouble("countryMarkers.xOffset", 0);
-			double zOffset = this.getConfig().getDouble("countryMarkers.zOffset", 0);
+			double xOffset = cfg.getDouble("countryMarkers.xOffset", 0);
+			double zOffset = cfg.getDouble("countryMarkers.zOffset", 0);
 
 			double x = (Double.valueOf(separated[2]) * scaling) + xOffset;
-			double y = this.getConfig().getInt("countryMarkers.y", 64);
+			double y = cfg.getInt("countryMarkers.y", 64);
 			double z = (Double.valueOf(separated[1]) * scaling * -1) + zOffset;
 
-			MarkerIcon markerIcon = markerapi.getMarkerIcon(this.getConfig().getString("countryMarkers.markerIconName", "king"));
+			MarkerIcon markerIcon = markerapi.getMarkerIcon(cfg.getString("countryMarkers.markerIconName", "king"));
 
-			markerSet.createMarker(separated[0], separated[3], world.getName(), x, y, z, markerIcon, false);
+			Marker marker = markerSet.createMarker(separated[0], separated[3], world.getName(), x, y, z, markerIcon, false);
+
+			if (minZoom > -1) marker.setMinZoom(minZoom);
+			if (maxZoom > -1) marker.setMaxZoom(maxZoom);
 		}
 		this.getLogger().info("Country markers enabled!");
 	}
