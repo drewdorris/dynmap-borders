@@ -1,10 +1,10 @@
-# Layer name that appears when you click the Layer button on the top left of the Dynmap
+# Layer name that appears when you click the Layer button in the top left of the Dynmap
 layerName: Country Borders
 
-# Whether to have the layer hidden by default
+# Whether to have the layer hidden by default (have to enable it under the Layer button in the top left)
 hideByDefault: false
 
-# Priority of the layer; determines the position in the list of various layers in the Layer button
+# Priority of the layer; determines the position in the list of various layers under the Layer button
 # Higher number = lower priority
 priority: 12
 
@@ -50,14 +50,14 @@ countryMarkers:
   # Defines how far you have to zoom in to see the layer
   # 0 is zoomed farthest out, higher number = closer zoom
   # If set to 1, the layer doesn't appear if you're zoomed all the way out
-  # Set to -1 for no minimum
+  # Set to -1 to default to default setting defined above
   # If you set min/max zoom for individual markers, it overrides this setting
   minimumZoom: -1
 
   # Defines how far you have to zoom out to see the layer
   # 0 is zoomed farthest out, higher number = closer zoom
   # If set to 0, the layer only appears if you're zoomed all the way out
-  # Set to -1 for no maximum
+  # Set to -1 to default to default setting defined above
   maximumZoom: -1
 
 shapefiles:
@@ -95,14 +95,14 @@ shapefiles:
     # Defines how far you have to zoom in to see the layer
     # 0 is zoomed farthest out, higher number = closer zoom
     # If set to 1, the layer doesn't appear when zoom < 1, so it doesn't appear if you're zoomed all the way out
-    # Set to -1 for no minimum
+    # Set to -1 to default to default setting defined above
     # If you set min/max zoom for individual markers, it overrides this setting
     minimumZoom: -1
 
     # Defines how far you have to zoom out to see the layer
     # 0 is zoomed farthest out, higher number = closer zoom
     # If set to 3, the layer doesn't appear after you zoom in more than 3 times
-    # Set to -1 for no maximum
+    # Set to -1 to default to default setting defined above
     maximumZoom: -1
 
     # World name to define this border for

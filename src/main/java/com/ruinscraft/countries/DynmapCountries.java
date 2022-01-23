@@ -57,7 +57,7 @@ public class DynmapCountries extends JavaPlugin {
 		this.api = (DynmapAPI) dynmap; /* Get API */
 
 		/* If both enabled, activate */
-		if (dynmap.isEnabled()) {
+		if (dynmap.isEnabled() && api != null) {
 			try {
 				activate();
 			} catch (IOException e) {
@@ -115,9 +115,11 @@ public class DynmapCountries extends JavaPlugin {
 	 * @throws IOException if something happens
 	 */
 	private void activate() throws IOException {
-		this.markerapi = api.getMarkerAPI();
-		if (this.markerapi == null) {
-			this.getLogger().severe("Error loading dynmap marker API!");
+		try {
+			this.markerapi = api.getMarkerAPI();
+		} catch (NullPointerException e) { // api is not null, it accesses some object I cant access that is null, which causes this
+			this.getLogger().severe("Error loading Dynmap Marker API! Is Dynmap disabled?");
+			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
 
