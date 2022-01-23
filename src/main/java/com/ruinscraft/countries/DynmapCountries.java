@@ -68,7 +68,7 @@ public class DynmapCountries extends JavaPlugin {
 	}
 
 	/**
-	 * Used to load config.yml and shapefile resources
+	 * Used to load config.yml and various resources (shapefile related files, countries.txt)
 	 * @param resource file path
 	 * @return File
 	 */
@@ -153,6 +153,11 @@ public class DynmapCountries extends JavaPlugin {
 			double xOffset = cfg.getDouble(section + "." + "xOffset", 0);
 			double yMarker = cfg.getInt(section + "." + "y", 64);
 			double zOffset = cfg.getDouble(section + "." + "zOffset", 0);
+
+			String desc = cfg.getString(section + "." + "description", null);
+			if (desc != null && desc.equalsIgnoreCase("none")) {
+				desc = null;
+			}
 
 			// get min/max zoom for indiv layers
 			int minZoomForShape = cfg.getInt(section + "." + "minimumZoom", -1);
@@ -304,8 +309,7 @@ public class DynmapCountries extends JavaPlugin {
 									cfg.getDouble(section + "." + "style.opacity", .5), color);
 							if (minZoomForShape > -1) polyline.setMinZoom(minZoomForShape);
 							if (maxZoomForShape > -1) polyline.setMaxZoom(maxZoomForShape);
-							//polyline.setLabel("test");
-							//polyline.setLabel("test2");
+							if (desc != null) polyline.setLabel(desc);
 
 							polygonIndex++;
 						}
@@ -321,7 +325,7 @@ public class DynmapCountries extends JavaPlugin {
 			}
 			if (errors) {
 				this.getLogger().warning("Shapefile " + fileName + " had errors on load and may be partially" +
-						" or completely unloaded. Shapefile is likely incorrectly formatted, or goes outside of normal borders");
+						" or completely unloaded. Shapefile is likely incorrectly formatted, or goes outside of normal borders.");
 			} else {
 				this.getLogger().info("Shapefile " + fileName + " successfully loaded!");
 			}
