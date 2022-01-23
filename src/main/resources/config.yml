@@ -35,7 +35,7 @@ countryMarkers:
   # Scaling depends on the size of your Earth map.
   # If 1:1000 scale of Earth, use 1000
   # If you're not using an Earth map or want more info:
-  # This value is divided by 120000 and then the X/Z coordinate for each point in the shapefile is multiplied by that result
+  # This value divides 120000 and then the X/Z coordinate for each point in the shapefile is multiplied by that result
   # So, making this value bigger will make your shapefile smaller
   scaling: 1000
 
@@ -79,9 +79,9 @@ shapefiles:
 
     # Scaling depends on the size of your Earth map.
     # If 1:1000 scale of Earth, use 1000
-    # If set to 1, the layer doesn't appear if you're zoomed all the way out
-    # Set to -1 for no minimum
-    # If you set min/max zoom for individual markers, it overrides this setting
+    # If you're not using an Earth map or want more info:
+    # This value divides 120000 and then the X/Z coordinate for each point in the shapefile is multiplied by that result
+    # So, making this value bigger will make your shapefile smaller
     scaling: 1000
 
     # If your Earth map is off center, you can shift the x/z of the center in blocks
@@ -94,14 +94,14 @@ shapefiles:
 
     # Defines how far you have to zoom in to see the layer
     # 0 is zoomed farthest out, higher number = closer zoom
-    # If set to 1, the layer doesn't appear if you're zoomed all the way out
+    # If set to 1, the layer doesn't appear when zoom < 1, so it doesn't appear if you're zoomed all the way out
     # Set to -1 for no minimum
     # If you set min/max zoom for individual markers, it overrides this setting
     minimumZoom: -1
 
     # Defines how far you have to zoom out to see the layer
     # 0 is zoomed farthest out, higher number = closer zoom
-    # If set to 0, the layer only appears if you're zoomed all the way out
+    # If set to 3, the layer doesn't appear after you zoom in more than 3 times
     # Set to -1 for no maximum
     maximumZoom: -1
 
