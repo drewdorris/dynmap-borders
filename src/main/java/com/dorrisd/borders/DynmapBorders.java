@@ -1,4 +1,4 @@
-package com.ruinscraft.countries;
+package com.dorrisd.borders;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class DynmapCountries extends JavaPlugin {
+public class DynmapBorders extends JavaPlugin {
 
 	private DynmapAPI api;
 	private MarkerAPI markerapi;
@@ -129,13 +129,13 @@ public class DynmapCountries extends JavaPlugin {
 		}
 		this.cfg = YamlConfiguration.loadConfiguration(configFile);
 
-		// Create new countries markerset
-		markerSet = markerapi.getMarkerSet("countries.markerset");
+		// Create new borders markerset
+		markerSet = markerapi.getMarkerSet("borders.markerset");
 		if(markerSet == null) {
-			markerSet = markerapi.createMarkerSet("countries.markerset",
-					cfg.getString("layerName", "Countries"), null, false);
+			markerSet = markerapi.createMarkerSet("borders.markerset",
+					cfg.getString("layerName", "Borders"), null, false);
 		} else {
-			markerSet.setMarkerSetLabel(cfg.getString("layerName", "Countries"));
+			markerSet.setMarkerSetLabel(cfg.getString("layerName", "Borders"));
 		}
 		if (markerSet == null) {
 			this.getLogger().severe("Error creating marker set");

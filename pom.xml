@@ -3,18 +3,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ruinscraft</groupId>
-    <artifactId>dynmap-countries</artifactId>
+    <groupId>com.dorrisd</groupId>
+    <artifactId>dynmap-borders</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>dynmap-countries</name>
+    <name>dynmap-borders</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <mainClass>com.ruinscraft.countries.DynmapCountries</mainClass>
+        <mainClass>com.dorrisd.borders.DynmapBorders</mainClass>
         <geotoolsVersion>22.1</geotoolsVersion>
     </properties>
 
@@ -108,7 +108,7 @@
                 </excludes>
             </resource>
         </resources>
-        <finalName>dynmap-countries</finalName>
+        <finalName>dynmap-borders</finalName>
     </build>
 
 </project>
