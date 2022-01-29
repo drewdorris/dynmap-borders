@@ -39,7 +39,7 @@ CD	-4.038333	21.758664	Congo [DRC]
 CF	6.611111	20.939444	Central African Republic
 CG	-0.228021	15.827659	Congo [Republic]
 CH	46.818188	8.227512	Switzerland
-CI	7.539989	-5.54708	Cote d'Ivoire
+CI	7.539989	-5.54708	Cote dIvoire
 CK	-21.236736	-159.777671	Cook Islands
 CL	-35.675147	-71.542969	Chile
 CM	7.369722	12.354722	Cameroon
