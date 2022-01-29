@@ -143,12 +143,15 @@ public class DynmapBorders extends JavaPlugin {
 				return;
 			}
 
-			markerSet.setLayerPriority(cfg.getInt("priority", 12));
-			markerSet.setHideByDefault(cfg.getBoolean("hideByDefault", true));
+			markerSet.setLayerPriority(cfg.getInt("layers." + section + ".priority", 12));
+			markerSet.setHideByDefault(cfg.getBoolean("layers." + section + ".hideByDefault", true));
+			markerSet.setMinZoom(cfg.getInt("layers." + section + ".minimumZoom", -1));
+			markerSet.setMaxZoom(cfg.getInt("layers." + section + ".maximumZoom", -1));
 		}
 
 		for (String section : cfg.getConfigurationSection("shapefiles").getKeys(false)) {
 			section = "shapefiles." + section;
+			String fileName = cfg.getString(section + "." + "shapefileName", "countryborders");
 			double scaling = 120000 / cfg.getDouble(section + "." + "scaling", 1000);
 			double xOffset = cfg.getDouble(section + "." + "xOffset", 0);
 			double yMarker = cfg.getInt(section + "." + "y", 64);
@@ -163,7 +166,7 @@ public class DynmapBorders extends JavaPlugin {
 			MarkerSet markerSet = markerapi.getMarkerSet("borders." + layerName);
 			if (markerSet == null) {
 				this.getLogger().warning("Layer \"" + layerName + "\" not found! "
-						+ "Shapefile \"" + section + "\" not added.");
+						+ "Shapefile \"" + fileName + "\" not added.");
 				continue;
 			}
 
@@ -175,7 +178,6 @@ public class DynmapBorders extends JavaPlugin {
 
 			boolean errors = false;
 
-			String fileName = cfg.getString(section + "." + "shapefileName", "countryborders");
 			File shapefile = new File(this.getDataFolder(), fileName + ".shp");
 			if (shapefile == null || !shapefile.isFile()) {
 				shapefile = this.loadResource(fileName + ".shp");
