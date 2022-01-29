@@ -39,7 +39,6 @@ public class DynmapBorders extends JavaPlugin {
 
 	private DynmapAPI api;
 	private MarkerAPI markerapi;
-	private MarkerSet markerSet;
 
 	FileConfiguration cfg;
 
@@ -129,25 +128,24 @@ public class DynmapBorders extends JavaPlugin {
 		}
 		this.cfg = YamlConfiguration.loadConfiguration(configFile);
 
-		// Create new borders markerset
-		markerSet = markerapi.getMarkerSet("borders.markerset");
-		if(markerSet == null) {
-			markerSet = markerapi.createMarkerSet("borders.markerset",
-					cfg.getString("layerName", "Borders"), null, false);
-		} else {
-			markerSet.setMarkerSetLabel(cfg.getString("layerName", "Borders"));
-		}
-		if (markerSet == null) {
-			this.getLogger().severe("Error creating marker set");
-			this.getPluginLoader().disablePlugin(this);
-			return;
-		}
+		for (String section : cfg.getConfigurationSection("layers").getKeys(false)) {
+			// Create new borders markerset
+			String layersName = cfg.getString("layers." + section + "." + "layerName", "Borders");
+			MarkerSet markerSet = markerapi.getMarkerSet("borders." + layersName);
+			if(markerSet == null) {
+				markerSet = markerapi.createMarkerSet("borders." + layersName, layersName, null, false);
+			} else {
+				markerSet.setMarkerSetLabel(layersName);
+			}
+			if (markerSet == null) {
+				this.getLogger().severe("Error creating marker set");
+				this.getPluginLoader().disablePlugin(this);
+				return;
+			}
 
-		int minZoom = cfg.getInt("minimumZoom", -1);
-		int maxZoom = cfg.getInt("maximumZoom", -1);
-
-		markerSet.setLayerPriority(cfg.getInt("priority", 12));
-		markerSet.setHideByDefault(cfg.getBoolean("hideByDefault", true));
+			markerSet.setLayerPriority(cfg.getInt("priority", 12));
+			markerSet.setHideByDefault(cfg.getBoolean("hideByDefault", true));
+		}
 
 		for (String section : cfg.getConfigurationSection("shapefiles").getKeys(false)) {
 			section = "shapefiles." + section;
@@ -161,11 +159,19 @@ public class DynmapBorders extends JavaPlugin {
 				desc = null;
 			}
 
+			String layerName = cfg.getString(section + "." + "layer", "Borders");
+			MarkerSet markerSet = markerapi.getMarkerSet("borders." + layerName);
+			if (markerSet == null) {
+				this.getLogger().warning("Layer \"" + layerName + "\" not found! "
+						+ "Shapefile \"" + section + "\" not added.");
+				continue;
+			}
+
 			// get min/max zoom for indiv layers
 			int minZoomForShape = cfg.getInt(section + "." + "minimumZoom", -1);
-			if (minZoomForShape == -1) minZoomForShape = minZoom;
+			if (minZoomForShape == -1) minZoomForShape = markerSet.getMinZoom();
 			int maxZoomForShape = cfg.getInt(section + "." + "maximumZoom", -1);
-			if (maxZoomForShape == -1) maxZoomForShape = maxZoom;
+			if (maxZoomForShape == -1) maxZoomForShape = markerSet.getMaxZoom();
 
 			boolean errors = false;
 
@@ -357,6 +363,13 @@ public class DynmapBorders extends JavaPlugin {
 		World world = Bukkit.getWorld(worldName);
 		if (world == null) {
 			this.getLogger().warning("World name for country markers is null! Country markers not loaded.");
+			return;
+		}
+
+		String layerName = cfg.getString("countryMarkers.layer", "Borders");
+		MarkerSet markerSet = markerapi.getMarkerSet("borders." + layerName);
+		if (markerSet == null) {
+			this.getLogger().warning("Layer \"" + layerName + "\" not found! Country markers not made.");
 			return;
 		}
 

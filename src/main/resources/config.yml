@@ -1,29 +1,39 @@
-# Layer name that appears when you click the Layer button in the top left of the Dynmap
-layerName: Country Borders
+# Layers are where your collections of markers/borders will appear
+# You can make multiple to separate different borders if you'd like
+# Primary reason you'd separate them is if you want some borders to not be enabled by default
+layers:
+  countriesLayer:
+    # Layer name that appears when you click the Layer button in the top left of the Dynmap
+    layerName: Country Borders
 
-# Whether to have the layer hidden by default (have to enable it under the Layer button in the top left)
-hideByDefault: false
+    # Whether to have the layer hidden by default (have to enable it under the Layer button in the top left)
+    hideByDefault: false
 
-# Priority of the layer; determines the position in the list of various layers under the Layer button
-# Higher number = lower priority
-priority: 12
+    # Priority of the layer; determines the position in the list of various layers under the Layer button
+    # Higher number = lower priority
+    priority: 12
 
-# Defines how far you have to zoom in to see the layer
-# 0 is zoomed farthest out, higher number = closer zoom
-# If set to 1, the layer doesn't appear if you're zoomed all the way out
-# Set to -1 for no minimum
-# If you set min/max zoom for individual markers, it overrides this setting
-minimumZoom: -1
+    # Defines how far you have to zoom in to see the layer
+    # 0 is zoomed farthest out, higher number = closer zoom
+    # If set to 1, the layer doesn't appear if you're zoomed all the way out
+    # Set to -1 for no minimum
+    # If you set min/max zoom for individual markers, it overrides this setting
+    minimumZoom: -1
 
-# Defines how far you have to zoom out to see the layer
-# 0 is zoomed farthest out, higher number = closer zoom
-# If set to 0, the layer only appears if you're zoomed all the way out
-# Set to -1 for no maximum
-maximumZoom: -1
+    # Defines how far you have to zoom out to see the layer
+    # 0 is zoomed farthest out, higher number = closer zoom
+    # If set to 0, the layer only appears if you're zoomed all the way out
+    # Set to -1 for no maximum
+    maximumZoom: -1
 
 countryMarkers:
   # Whether country name markers should be enabled
   enable: true
+
+  # The name of the layer that you want to add these markers to
+  # It can be a layer defined above, or a layer that already exists
+  # EXACT NAME, or the markers will not load!
+  layer: Country Borders
 
   # Name of the Dynmap marker used for the country name markers
   # (configure markers in Dynmap; you can make custom markers)
@@ -72,6 +82,11 @@ shapefiles:
     # I used https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/
     # I haven't tested every shapefile out there, so there are some which may not work
     shapefileName: countryborders
+
+    # The name of the layer that you want to add these markers to
+    # It can be a layer defined above, or a layer that already exists
+    # EXACT NAME, or your shapefile will not load!
+    layer: Country Borders
 
     # Text shown when you click on the border itself
     # (Remove this config option or replace it with "None" to disable it)
@@ -125,6 +140,10 @@ shapefiles:
     # https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
     # I did not supply the above files so this section will log a warning
     shapefileName: cb_2018_us_region_5m
+
+    layer: Country Borders
+
+    description: State Border
 
     scaling: 1000
 
